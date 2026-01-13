@@ -1,0 +1,11 @@
+apiVersion: backstage.io/v1alpha1
+kind: Component
+metadata:
+  name: backstage-idp
+  description: |
+    Backstage rodando no cluster kind-platform como frontend do IDP.
+spec:
+  type: website
+  lifecycle: experimental
+  owner: group:default/platform-team
+  system: kratix-lab

@@ -1,0 +1,9 @@
+apiVersion: backstage.io/v1alpha1
+kind: System
+metadata:
+  name: kratix-lab
+  description: |
+    Plataforma de engenharia baseada em Kratix, Backstage e GitOps.
+    Usada como PoC para modelar um IDP corporativo.
+spec:
+  owner: group:default/platform-team
