@@ -1,0 +1,12 @@
+apiVersion: backstage.io/v1alpha1
+kind: Resource
+metadata:
+  name: kratix-destination-worker-git
+  title: Kratix Destination (worker-git)
+  description: Destination que grava os manifests processados no GitStateStore
+spec:
+  type: kratix-destination
+  owner: group:default/platform-team
+  system: kratix-lab
+  dependsOn:
+    - resource:default/kratix-gitstatestore

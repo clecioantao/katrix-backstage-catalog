@@ -1,11 +1,13 @@
 apiVersion: backstage.io/v1alpha1
 kind: Component
 metadata:
-  name: backstage-idp
-  description: |
-    Backstage rodando no cluster kind-platform como frontend do IDP.
+  name: kratix-idp
+  title: Kratix IDP (Backstage)
+  description: Backstage rodando no Kind como frontend da PoC
+  annotations:
+    backstage.io/kubernetes-id: kratix-idp
 spec:
-  type: website
+  type: service
   lifecycle: experimental
   owner: group:default/platform-team
   system: kratix-lab

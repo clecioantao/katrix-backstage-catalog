@@ -1,0 +1,12 @@
+apiVersion: backstage.io/v1alpha1
+kind: Location
+metadata:
+  name: kratix-idp-catalog
+  description: Catálogo base da PoC Kratix + Backstage
+spec:
+  targets:
+    - ./system-kratix-lab.yaml
+    - ./component-backstage.yaml
+    - ./resource-kratix-gitstatestore.yaml
+    - ./resource-kratix-destination-worker-git.yaml
+    - ./resource-kratix-promise-postgresql.yaml

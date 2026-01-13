@@ -1,14 +1,11 @@
 apiVersion: backstage.io/v1alpha1
 kind: Resource
 metadata:
-  name: kratix-git-state-store
-  description: |
-    Repositório Git usado como StateStore do Kratix
-    para persistir outputs e estados reconciliados.
+  name: kratix-gitstatestore
+  title: Kratix GitStateStore (platform-git)
+  description: StateStore Git onde o Kratix escreve os outputs
 spec:
   type: git-repository
   owner: group:default/platform-team
   system: kratix-lab
-  links:
-    - url: https://github.com/clecioantao/kratix-output
-      title: Kratix Output Repository
+  dependsOn: []

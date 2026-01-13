@@ -1,0 +1,12 @@
+apiVersion: backstage.io/v1alpha1
+kind: Resource
+metadata:
+  name: kratix-promise-postgresql
+  title: Promise PostgreSQL
+  description: Promise instalada no Kratix para provisionar PostgreSQL
+spec:
+  type: kratix-promise
+  owner: group:default/platform-team
+  system: kratix-lab
+  dependsOn:
+    - resource:default/kratix-destination-worker-git
