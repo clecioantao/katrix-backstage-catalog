@@ -1,0 +1,43 @@
+apiVersion: backstage.io/v1alpha1
+kind: Location
+metadata:
+  name: kratix-lab-locations
+spec:
+  targets:
+    - ./system-kratix-lab.yaml
+    - ./component-backstage.yaml
+    - ./resource-kratix-gitstatestore.yaml
+---
+apiVersion: backstage.io/v1alpha1
+kind: System
+metadata:
+  name: kratix-lab
+  description: PoC Kratix + Backstage + GitOps
+spec:
+  owner: group:default/platform-team
+---
+apiVersion: backstage.io/v1alpha1
+kind: Component
+metadata:
+  name: backstage-idp
+  description: Backstage rodando no kind-platform, integrado com Kratix
+spec:
+  type: website
+  lifecycle: experimental
+  owner: group:default/platform-team
+  system: kratix-lab
+---
+apiVersion: backstage.io/v1alpha1
+kind: Resource
+metadata:
+  name: kratix-state-store-git
+  description: Repositório Git usado como StateStore (outputs do Kratix)
+spec:
+  type: git-repository
+  owner: group:default/platform-team
+  system: kratix-lab
+  dependencyOf:
+    - component:default/backstage-idp
+  links:
+    - url: https://github.com/clecioantao/kratix-output
+      title: Kratix output repo
