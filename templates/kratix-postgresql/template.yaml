@@ -1,0 +1,88 @@
+apiVersion: scaffolder.backstage.io/v1beta3
+kind: Template
+metadata:
+  name: kratix-postgresql-request
+  title: Kratix - Solicitar PostgreSQL (GitOps)
+  description: Gera um Resource Request PostgreSQL do Kratix e publica no repositório GitOps
+  tags:
+    - kratix
+    - postgres
+    - gitops
+spec:
+  owner: group:default/platform-team
+  type: service
+
+  parameters:
+    - title: Dados do Request
+      required:
+        - component_id
+        - env
+        - teamId
+        - dbName
+      properties:
+        component_id:
+          title: Nome do componente
+          type: string
+          description: Identificador do componente (vai virar nome do recurso no cluster)
+          pattern: "^[a-z0-9]([-a-z0-9]*[a-z0-9])?$"
+        env:
+          title: Ambiente
+          type: string
+          default: dev
+          enum: [dev, prod]
+        teamId:
+          title: Team ID (owner do DB)
+          type: string
+          default: acid
+        dbName:
+          title: Nome do banco
+          type: string
+          default: postgres
+
+    - title: Repositório GitOps (Requests)
+      required:
+        - repoUrl
+      properties:
+        repoUrl:
+          title: Repo GitOps (owner/repo)
+          type: string
+          description: Ex: github.com?owner=clecioantao&repo=kratix-gitops-requests
+          ui:field: RepoUrlPicker
+          ui:options:
+            allowedHosts:
+              - github.com
+
+  steps:
+    - id: fetch
+      name: Gerar manifesto do request
+      action: fetch:template
+      input:
+        url: ./skeleton
+        values:
+          component_id: ${{ parameters.component_id }}
+          env: ${{ parameters.env }}
+          teamId: ${{ parameters.teamId }}
+          dbName: ${{ parameters.dbName }}
+
+    - id: publish
+      name: Publicar request no repo GitOps
+      action: publish:github
+      input:
+        repoUrl: ${{ parameters.repoUrl }}
+        defaultBranch: main
+        repoVisibility: private
+        sourcePath: .
+        description: "GitOps requests para Kratix (PoC)"
+        protectDefaultBranch: false
+
+    - id: register
+      name: Registrar no Catálogo (opcional)
+      action: catalog:register
+      input:
+        repoContentsUrl: ${{ steps.publish.output.repoContentsUrl }}
+        catalogInfoPath: catalog-info.yaml
+
+  output:
+    links:
+      - title: Repositório GitOps (requests)
+        url: ${{ steps.publish.output.remoteUrl }}
