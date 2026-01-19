@@ -1,0 +1,12 @@
+apiVersion: backstage.io/v1alpha1
+kind: Location
+metadata:
+  name: kratix-templates
+  description: Location para Templates do Kratix
+spec:
+  type: url
+  targets:
+    - https://raw.githubusercontent.com/clecioantao/katrix-backstage-catalog/main/templates/kratix-postgresql/template.yaml
+  rules:
+    - allow:
+        - Template
