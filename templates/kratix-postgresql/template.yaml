@@ -1,0 +1,109 @@
+apiVersion: scaffolder.backstage.io/v1beta3
+kind: Template
+metadata:
+  name: kratix-postgresql-simple
+  title: Kratix - PostgreSQL (Simples)
+  description: Gera um manifesto de Postgres (Kratix Promise) para aplicar no cluster.
+  tags:
+    - kratix
+    - postgresql
+    - platform
+spec:
+  owner: group:default/platform
+  type: service
+
+  parameters:
+    - title: Dados do PostgreSQL
+      required:
+        - name
+        - env
+        - teamId
+        - dbName
+      properties:
+        name:
+          title: Nome do recurso (curto!)
+          type: string
+          description: >
+            Nome do recurso Kratix e também base do nome do cluster criado no worker.
+            Use curto para não estourar 63 chars (ex: acme-pg).
+          pattern: '^[a-z0-9]([a-z0-9-]{0,18}[a-z0-9])?$'
+          maxLength: 20
+          default: acme-pg
+
+        namespace:
+          title: Namespace (onde o recurso Kratix vai existir)
+          type: string
+          default: default
+          pattern: '^[a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?$'
+
+        env:
+          title: Ambiente
+          type: string
+          description: O Promise postgresql aceita dev ou prod.
+          enum:
+            - dev
+            - prod
+          default: dev
+
+        teamId:
+          title: Team ID (role superuser no Postgres)
+          type: string
+          description: Ex: acme-org-team-a
+          pattern: '^[a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?$'
+          default: acme-org-team-a
+
+        dbName:
+          title: Nome do DB
+          type: string
+          description: Nome do banco a ser criado (owner será o teamId).
+          default: postgres
+          pattern: '^[a-zA-Z0-9_]{1,30}$'
+
+        backupEnabled:
+          title: Backups habilitados?
+          type: boolean
+          default: false
+
+    - title: Saída do arquivo
+      required:
+        - outputDir
+      properties:
+        outputDir:
+          title: Pasta de saída no workspace do Scaffolder
+          type: string
+          default: kratix-manifests
+
+  steps:
+    - id: fetch
+      name: Gerar manifesto do recurso Kratix
+      action: fetch:template
+      input:
+        url: ./skeleton
+        targetPath: ${{ parameters.outputDir }}
+        values:
+          name: ${{ parameters.name }}
+          namespace: ${{ parameters.namespace }}
+          env: ${{ parameters.env }}
+          teamId: ${{ parameters.teamId }}
+          dbName: ${{ parameters.dbName }}
+          backupEnabled: ${{ parameters.backupEnabled }}
+
+    - id: log
+      name: Próximo passo (bem simples)
+      action: debug:log
+      input:
+        message: |
+          ✅ Manifesto gerado em: ${{ parameters.outputDir }}/pg-${{ parameters.name }}.yaml
+
+          Próximos passos (manual por enquanto):
+          1) Baixe o resultado do template (Download)
+          2) Aplique no cluster platform:
+             kubectl --context kind-platform apply -f ${{ parameters.outputDir }}/pg-${{ parameters.name }}.yaml
+          3) Acompanhe:
+             kubectl --context kind-platform -n ${{ parameters.namespace }} get postgresqls.marketplace.kratix.io ${{ parameters.name }} -o yaml
+             kubectl --context kind-worker -n ${{ parameters.namespace }} get postgresqls.acid.zalan.do -o wide
+
+  output:
+    links:
+      - title: Abrir diretório gerado (workspace)
+        url: ./

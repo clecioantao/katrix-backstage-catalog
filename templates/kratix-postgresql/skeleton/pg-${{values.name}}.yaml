@@ -1,0 +1,11 @@
+apiVersion: marketplace.kratix.io/v1alpha2
+kind: postgresql
+metadata:
+  name: ${{ values.name }}
+  namespace: ${{ values.namespace }}
+spec:
+  backupEnabled: ${{ values.backupEnabled }}
+  dbName: ${{ values.dbName }}
+  env: ${{ values.env }}
+  namespace: ${{ values.namespace }}
+  teamId: ${{ values.teamId }}
