@@ -1,85 +1,84 @@
 apiVersion: scaffolder.backstage.io/v1beta3
 kind: Template
 metadata:
-  name: kratix-postgresql-simple
-  title: Kratix - PostgreSQL (Simples)
-  description: Gera um manifesto de Postgres (Kratix Promise) para aplicar no cluster.
+  name: kratix-postgresql-request-dev
+  title: Kratix - PostgreSQL Request (DEV - commit direto)
+  description: >
+    Gera o YAML do request do Kratix (PostgreSQL),
+    commita direto no repositório de state (GitOps)
+    e registra o componente no catálogo.
   tags:
     - kratix
     - postgresql
-    - platform
+    - gitops
 spec:
-  owner: group:default/platform
+  owner: group:default/platform-team
   type: service
 
   parameters:
-    - title: Dados do PostgreSQL
+    - title: Identificação
       required:
         - name
+        - namespace
         - env
         - teamId
-        - dbName
       properties:
         name:
-          title: Nome do recurso (curto!)
+          title: Nome do recurso (Kratix/Postgres)
           type: string
-          description: >
-            Nome do recurso Kratix e também base do nome do cluster criado no worker.
-            Use curto para não estourar 63 chars (ex: acme-pg).
-          pattern: '^[a-z0-9]([a-z0-9-]{0,18}[a-z0-9])?$'
-          maxLength: 20
-          default: acme-pg
-
+          description: Ex: acme-pg
+          pattern: '^[a-z0-9]([-a-z0-9]*[a-z0-9])?$'
         namespace:
-          title: Namespace (onde o recurso Kratix vai existir)
+          title: Namespace do Kubernetes
           type: string
           default: default
-          pattern: '^[a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?$'
-
         env:
           title: Ambiente
           type: string
-          description: O Promise postgresql aceita dev ou prod.
-          enum:
-            - dev
-            - prod
           default: dev
-
+          enum: [dev, prod]
         teamId:
-          title: Team ID (role superuser no Postgres)
+          title: Team ID (owner do banco)
           type: string
-          description: "Ex: acme-org-team-a"
-          pattern: '^[a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?$'
           default: acme-org-team-a
 
+    - title: Configuração do banco
+      required:
+        - dbName
+      properties:
         dbName:
-          title: Nome do DB
+          title: Database name
           type: string
-          description: Nome do banco a ser criado (owner será o teamId).
           default: postgres
-          pattern: '^[a-zA-Z0-9_]{1,30}$'
-
         backupEnabled:
-          title: Backups habilitados?
+          title: Backup habilitado?
           type: boolean
           default: false
 
-    - title: Saída do arquivo
+    - title: Repositório de State (GitOps)
       required:
-        - outputDir
+        - repoUrl
+        - targetBranch
       properties:
-        outputDir:
-          title: Pasta de saída no workspace do Scaffolder
+        repoUrl:
+          title: Repo URL (kratix-state-repo)
           type: string
-          default: kratix-manifests
+          description: >
+            Formato Backstage:
+            github.com?owner=ORG&repo=REPO
+          default: github.com?owner=clecioantao&repo=kratix-state-repo
+        targetBranch:
+          title: Branch destino
+          type: string
+          default: main
 
   steps:
-    - id: fetch
-      name: Gerar manifesto do recurso Kratix
+    # 1️⃣ Gera os arquivos a partir do skeleton
+    - id: generate
+      name: Gerar arquivos (request + catalog-info)
       action: fetch:template
       input:
         url: ./skeleton
-        targetPath: ${{ parameters.outputDir }}
         values:
           name: ${{ parameters.name }}
           namespace: ${{ parameters.namespace }}
@@ -88,22 +87,29 @@ spec:
           dbName: ${{ parameters.dbName }}
           backupEnabled: ${{ parameters.backupEnabled }}
 
-    - id: log
-      name: Próximo passo (bem simples)
-      action: debug:log
+    # 2️⃣ Commit direto (DEV)
+    - id: publish
+      name: Commit no repo de state (DEV)
+      action: publish:github
       input:
-        message: |
-          ✅ Manifesto gerado em: ${{ parameters.outputDir }}/pg-${{ parameters.name }}.yaml
+        repoUrl: ${{ parameters.repoUrl }}
+        branch: ${{ parameters.targetBranch }}
+        sourcePath: .
+        commitMessage: "feat(kratix): add postgresql request ${{ parameters.name }}"
+        description: "Kratix PostgreSQL request for ${{ parameters.name }}"
 
-          Próximos passos (manual por enquanto):
-          1) Baixe o resultado do template (Download)
-          2) Aplique no cluster platform:
-             kubectl --context kind-platform apply -f ${{ parameters.outputDir }}/pg-${{ parameters.name }}.yaml
-          3) Acompanhe:
-             kubectl --context kind-platform -n ${{ parameters.namespace }} get postgresqls.marketplace.kratix.io ${{ parameters.name }} -o yaml
-             kubectl --context kind-worker -n ${{ parameters.namespace }} get postgresqls.acid.zalan.do -o wide
+    # 3️⃣ Registro no catálogo
+    - id: register
+      name: Registrar no Catalog
+      action: catalog:register
+      input:
+        repoContentsUrl: ${{ steps.publish.output.repoContentsUrl }}
+        catalogInfoPath: catalog-info.yaml
 
   output:
     links:
-      - title: Abrir diretório gerado (workspace)
-        url: ./
+      - title: Repositório (state repo)
+        url: ${{ steps.publish.output.remoteUrl }}
+      - title: Abrir no Catalog
+        icon: catalog
+        entityRef: ${{ steps.register.output.entityRef }}

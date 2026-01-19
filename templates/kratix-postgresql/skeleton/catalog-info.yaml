@@ -1,0 +1,13 @@
+apiVersion: backstage.io/v1alpha1
+kind: Component
+metadata:
+  name: ${{ values.name }}
+  description: PostgreSQL provisionado via Kratix
+  tags:
+    - postgresql
+    - kratix
+    - database
+spec:
+  type: resource
+  lifecycle: experimental
+  owner: group:default/platform-team
